@@ -1,0 +1,76 @@
+# Elke and Joy
+# January 2017
+# Import packages
+
+# Source functions
+
+library(sp)
+library(rgdal)
+library(rgeos)
+#source('R/NDVI_function.R')
+#source('R/cloudMask.R')
+
+##Step 1. Download files Rail and Places
+library(tools)
+download.file(url = 'http://www.mapcruzin.com/download-shapefile/netherlands-places-shape.zip', destfile = 'NLplaces.zip', method = 'auto')
+download.file(url = 'http://www.mapcruzin.com/download-shapefile/netherlands-railways-shape.zip', destfile = 'NLrail.zip', method = 'auto')
+
+##Step 2. Unpack the archive
+unzip('NLplaces.zip', exdir="data", unzip="internal")
+unzip('NLrail.zip', exdir="data", unzip="internal")
+
+##Step 3. Read the layers
+dsnPlaces = file.path("data","places.shp")
+
+ogrListLayers(dsnPlaces) # To find out what the layers are
+myPlaces<- readOGR(dsnPlaces, layer = ogrListLayers(dsnPlaces))
+
+
+dsnRail= file.path("data","railways.shp")
+
+ogrListLayers(dsnRail) # To find out what the layers are
+myRail<- readOGR(dsnRail, layer = ogrListLayers(dsnRail))
+
+
+##Step 4. Select industrial
+industrial<-subset(myRail, type=="industrial")
+
+
+##Step 5. Transformation of coordinates
+# Define CRS object for RD projection
+prj_string_RD <- CRS("+proj=sterea +lat_0=52.15616055555555 +lon_0=5.38763888888889 +k=0.9999079 +x_0=155000 +y_0=463000 +ellps=bessel +towgs84=565.2369,50.0087,465.658,-0.406857330322398,0.350732676542563,-1.8703473836068,4.0812 +units=m +no_defs")
+industrialRD <- spTransform(industrial, prj_string_RD)
+
+
+placesRD <- spTransform(myPlaces, prj_string_RD)
+
+
+##Step 6. Buffer industrial 1000m
+buffIndustrial <- gBuffer(industrialRD, width=1000,byid=TRUE)
+
+
+
+##Step 7. Intersect with City
+intersection <- as.data.frame(gIntersects(buffIndustrial, placesRD, byid=TRUE))
+
+
+
+##Step 7. Intersect with City
+oneCity<-subset(placesRD, intersection[,1])
+
+
+##Step 8. Print and Plot
+cityName<-oneCity@data$name
+cityPop<-oneCity@data$population
+
+
+print(paste(cityName,"has a population of",cityPop))
+
+plot(oneCity)
+plot(buffIndustrial, col = "light blue")
+plot(oneCity, add=TRUE)
+box()
+
+mtext(side = 3, paste("Intersection between boundary and City of",cityName), line = 2.5, cex=1.1)
+
+

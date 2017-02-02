@@ -12,11 +12,6 @@ distancelimit=0.5
 path="Pics"
 dirshp="Forts_point_FINAL/"
 
-###Elke
-#api_key='331df65514d37c6b051950436a9bedb8'
-#api_secret='fd9494bf6e6988f5'
-
-###JOY
 api_key=
 api_secret=
 
